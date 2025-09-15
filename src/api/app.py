@@ -168,8 +168,9 @@ async def chat_with_interviewer(request: ChatRequest):
         if not session:
             raise HTTPException(status_code=404, detail="Interview session not found")
         
-        # Get chatbot response
-        chatbot_response = interview_chatbot.get_response(request.message, request.session_id)
+        # Get chatbot response (dict)
+        bot = interview_chatbot.get_response(request.message, request.session_id)
+        bot_text = bot.get("response", "")
         
         # Add candidate message to conversation
         session_manager.add_conversation_turn(request.session_id, {
@@ -178,46 +179,41 @@ async def chat_with_interviewer(request: ChatRequest):
             'timestamp': time.time()
         })
         
-        # Add chatbot response to conversation
-        session_manager.add_conversation_turn(request.session_id, {
-            'type': 'ai',
-            'content': chatbot_response,
-            'timestamp': time.time()
-        })
+        # Add chatbot response to conversation (if any)
+        if bot_text:
+            session_manager.add_conversation_turn(request.session_id, {
+                'type': 'ai',
+                'content': bot_text,
+                'timestamp': time.time()
+            })
         
-        # Store the response
+        # Store basic analysis placeholder
         session_manager.add_response(request.session_id, {
             'message': request.message,
             'analysis': {'score': 0.8, 'feedback': 'Good response'},
             'timestamp': time.time()
         })
         
-        # Generate next question based on context
-        context = {
-            'stage': session.get('data', {}).get('stage', 'initial'),
-            'response_score': 0.8
-        }
-        
+        # Simple next question placeholder
         next_question = "Thank you for your response. Let me ask you another question about your experience."
-        
-        # Add next question to session
         session_manager.add_question(request.session_id, {
             'question': next_question,
             'timestamp': time.time(),
             'type': 'follow_up'
         })
         
-        
         # Get session summary
         session_summary = session_manager.get_session_summary(request.session_id)
         
         return ChatResponse(
-            response=chatbot_response.get("response", "Thank you for your response."),
+            response=bot_text,
             next_question=next_question,
             analysis={"score": 0.8, "feedback": "Good response"},
             session_summary=session_summary
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in chat: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process chat: {str(e)}")
@@ -298,6 +294,29 @@ async def speak_text(request: dict):
         logger.error(f"Error in TTS: {e}")
         raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
 
+@app.post("/api/v1/tts/stop")
+async def stop_tts():
+    try:
+        tts_module.stop()
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Error stopping TTS: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS stop error: {str(e)}")
+
+@app.post("/api/v1/tts/voice/settings")
+async def update_tts_settings(request: dict):
+    try:
+        rate = request.get('rate')
+        volume = request.get('volume')
+        if rate is not None:
+            tts_module.set_voice_rate(int(rate))
+        if volume is not None:
+            tts_module.set_volume(float(volume))
+        return {"success": True, "rate": rate, "volume": volume}
+    except Exception as e:
+        logger.error(f"Error updating TTS settings: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS settings error: {str(e)}")
+
 @app.get("/api/v1/tts/status")
 async def get_tts_status():
     """Get TTS status"""
@@ -309,39 +328,6 @@ async def get_tts_status():
     except Exception as e:
         logger.error(f"Error getting TTS status: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get TTS status: {str(e)}")
-
-@app.post("/api/v1/tts/stop")
-async def stop_tts():
-    """Stop current TTS"""
-    try:
-        tts_module.stop()
-        return {"success": True, "message": "TTS stopped"}
-    except Exception as e:
-        logger.error(f"Error stopping TTS: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop TTS: {str(e)}")
-
-
-
-@app.post("/api/v1/tts/voice/settings")
-async def update_voice_settings(request: dict):
-    """Update voice settings for better quality"""
-    try:
-        rate = request.get('rate', 180)
-        volume = request.get('volume', 0.9)
-        
-        tts_module.set_voice_rate(rate)
-        tts_module.set_volume(volume)
-        
-        return {
-            "success": True,
-            "rate": rate,
-            "volume": volume,
-            "message": "Voice settings updated"
-        }
-        
-    except Exception as e:
-        logger.error(f"Error updating voice settings: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update voice settings: {str(e)}")
 
 @app.get("/api/v1/tts/voice/info")
 async def get_voice_info():

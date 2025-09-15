@@ -7,6 +7,7 @@ import os
 import tempfile
 from typing import Optional
 import pyttsx3
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,8 @@ class TTSModule:
     def __init__(self):
         self.engine = None
         self.initialized = False
+        self._lock = threading.Lock()
+        self._speaking = False
         self._initialize_tts()
     
     def _initialize_tts(self):
@@ -80,24 +83,27 @@ class TTSModule:
             logger.warning("TTS engine not initialized")
             return False
         
-        try:
-            # Clean and optimize the text for speech
-            clean_text = self._clean_text(text)
-            
-            if not clean_text.strip():
+        clean_text = self._clean_text(text)
+        if not clean_text.strip():
+            return False
+        
+        with self._lock:
+            if self._speaking:
+                logger.info("TTS already speaking; skipping overlapping request")
                 return False
-            
+            self._speaking = True
+        
+        try:
             logger.info(f"Speaking: {clean_text[:50]}...")
-            
-            # Speak with premium settings
             self.engine.say(clean_text)
             self.engine.runAndWait()
-            
             return True
-            
         except Exception as e:
             logger.error(f"Error in TTS: {e}")
             return False
+        finally:
+            with self._lock:
+                self._speaking = False
     
     def _clean_text(self, text: str) -> str:
         """Ultra-clean text processing for optimal speech synthesis"""
@@ -148,32 +154,29 @@ class TTSModule:
         # Clean up multiple spaces and ensure proper punctuation
         text = ' '.join(text.split())
         
-        # Ensure proper sentence endings
         if text and not text.endswith(('.', '!', '?')):
             text += '.'
         
         return text
     
     def set_voice_rate(self, rate: int):
-        """Set speech rate (words per minute)"""
         if self.engine and self.initialized:
             self.engine.setProperty('rate', rate)
     
     def set_volume(self, volume: float):
-        """Set volume (0.0 to 1.0)"""
         if self.engine and self.initialized:
             self.engine.setProperty('volume', volume)
     
     def stop(self):
-        """Stop current speech"""
         if self.engine and self.initialized:
             try:
-                self.engine.stop()
+                with self._lock:
+                    self.engine.stop()
+                    self._speaking = False
             except Exception as e:
                 logger.error(f"Error stopping TTS: {e}")
     
     def is_available(self) -> bool:
-        """Check if TTS is available"""
         return self.initialized and self.engine is not None
 
 # Global TTS instance

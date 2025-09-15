@@ -14,6 +14,7 @@ class AudioService {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
           sampleRate: 44100
         } 
       });

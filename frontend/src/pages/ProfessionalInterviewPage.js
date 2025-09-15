@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { sttService } from '../services/sttService';
 import styled from 'styled-components';
+
+const API_BASE = 'http://localhost:8000';
 import { toast } from 'react-hot-toast';
 import { 
   Phone,
@@ -340,26 +343,65 @@ const StartButton = styled.button`
   }
 `;
 
+const CaptionOverlay = styled.div`
+  position: absolute;
+  bottom: 180px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  max-width: 80%;
+  pointer-events: none;
+`;
+
 const ProfessionalInterviewPage = () => {
   const { interviewId } = useParams();
   const navigate = useNavigate();
   
   const [interviewState, setInterviewState] = useState('ready'); // ready, active, completed
   const [sessionData, setSessionData] = useState(null);
+  const pendingTranscriptsRef = useRef([]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [userResponse, setUserResponse] = useState('');
   const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [voiceOnly, setVoiceOnly] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceSettings, setVoiceSettings] = useState({ rate: 180, volume: 0.9 });
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [liveCaption, setLiveCaption] = useState('');
+  const [sttActive, setSttActive] = useState(false);
   
   const streamRef = useRef(null);
   const videoRef = useRef(null);
   const recordingIntervalRef = useRef(null);
+
+  // STT bindings
+  useEffect(() => {
+    sttService.setCallbacks({
+      onResult: ({ transcript, isFinal }) => {
+        if (!isFinal) {
+          setLiveCaption(transcript);
+          setUserResponse(transcript);
+          return;
+        }
+        setLiveCaption('');
+        if (!sessionData?.session_id) {
+          pendingTranscriptsRef.current.push(transcript);
+        } else {
+          handleUserResponse(transcript);
+        }
+        setUserResponse('');
+      },
+      onError: (e) => console.error('STT error', e)
+    });
+  }, []);
 
   // Auto-start interview when component mounts
   useEffect(() => {
@@ -375,16 +417,24 @@ const ProfessionalInterviewPage = () => {
       // Start video stream
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
       });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
       }
+
+      // Start STT listening
+      if (sttService.available) {
+        sttService.start();
+      } else {
+        console.warn('Web Speech API not available');
+        toast.error('Speech recognition not supported in this browser.');
+      }
       
       // Start interview session
-      const response = await fetch('/api/v1/interviews/start', {
+      const response = await fetch(API_BASE + '/api/v1/interviews/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -395,14 +445,21 @@ const ProfessionalInterviewPage = () => {
         })
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setSessionData(data);
-        
-        // Start timer
-        recordingIntervalRef.current = setInterval(() => {
-          setRecordingDuration(prev => prev + 1);
-        }, 1000);
+              if (response.ok) {
+          const data = await response.json();
+          setSessionData(data);
+
+          // Flush any queued transcripts
+          if (pendingTranscriptsRef.current.length) {
+            const toSend = [...pendingTranscriptsRef.current];
+            pendingTranscriptsRef.current = [];
+            toSend.forEach(t => handleUserResponse(t, data.session_id));
+          }
+          
+          // Start timer
+          recordingIntervalRef.current = setInterval(() => {
+            setRecordingDuration(prev => prev + 1);
+          }, 1000);
         
         // AI bot starts asking first question
         setTimeout(() => {
@@ -464,7 +521,7 @@ const ProfessionalInterviewPage = () => {
     }
   };
 
-  const handleUserResponse = async (response) => {
+  const handleUserResponse = async (response, forcedSessionId = null) => {
     if (!response.trim()) return;
     
     try {
@@ -476,13 +533,13 @@ const ProfessionalInterviewPage = () => {
       }]);
       
       // Send response to AI
-      const apiResponse = await fetch('/api/v1/interviews/chat', {
+      const apiResponse = await fetch(API_BASE + '/api/v1/interviews/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          session_id: sessionData?.session_id || 'demo_session',
+          session_id: forcedSessionId || sessionData?.session_id, 
           message: response
         })
       });
@@ -532,8 +589,17 @@ const ProfessionalInterviewPage = () => {
   const speakText = async (text) => {
     if (!ttsEnabled || isSpeaking) return; // Prevent duplicate calls
     setIsSpeaking(true);
+
+    // Mute mic while TTS plays to prevent feedback/echo
+    const prevMuted = isMuted;
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach(t => t.enabled = false);
+    }
+    setIsMuted(true);
+
     try {
-      await fetch('/api/v1/tts/speak', {
+      if (sttService.isListening) sttService.stop();
+      await fetch(API_BASE + '/api/v1/tts/speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
@@ -542,18 +608,30 @@ const ProfessionalInterviewPage = () => {
       console.error('Error speaking text:', error);
       toast.error('Failed to speak AI response.');
     } finally {
+      // Re-enable mic to previous state
+      if (streamRef.current) {
+        streamRef.current.getAudioTracks().forEach(t => t.enabled = !prevMuted);
+      }
+      setIsMuted(prevMuted);
+      // Resume STT after TTS ends
+      if (sttService.available) sttService.start();
       setIsSpeaking(false);
     }
   };
 
   const toggleTTS = () => {
     setTtsEnabled(!ttsEnabled);
+    // Pause STT while TTS is enabled and speaking
+    if (!ttsEnabled) {
+      // Turning ON TTS
+      if (sttService.isListening) sttService.stop();
+    }
   };
 
 
   const updateVoiceSettings = async (newSettings) => {
     try {
-      const response = await fetch('/api/v1/tts/voice/settings', {
+      const response = await fetch(API_BASE + '/api/v1/tts/voice/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -582,7 +660,7 @@ const ProfessionalInterviewPage = () => {
 
   const stopTTS = async () => {
     try {
-      await fetch('/api/v1/tts/stop', { method: 'POST' });
+      await fetch(API_BASE + '/api/v1/tts/stop', { method: 'POST' });
       setIsSpeaking(false);
     } catch (error) {
       console.error('Error stopping TTS:', error);
@@ -592,10 +670,29 @@ const ProfessionalInterviewPage = () => {
   const endInterview = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
+    if (videoRef.current) {
+      try { videoRef.current.srcObject = null; } catch (_) {}
+    }
+    if (sttService.isListening) sttService.stop();
     clearInterval(recordingIntervalRef.current);
     setInterviewState('completed');
     navigate('/dashboard');
+  };
+
+  const startSTT = () => {
+    if (sttService.available && !sttService.isListening) {
+      const ok = sttService.start();
+      if (ok) setSttActive(true);
+    }
+  };
+  const stopSTT = () => {
+    if (sttService.isListening) {
+      sttService.stop();
+      setSttActive(false);
+      setLiveCaption('');
+    }
   };
 
   if (interviewState === 'ready') {
@@ -634,6 +731,9 @@ const ProfessionalInterviewPage = () => {
           <ControlButton onClick={() => setIsMuted(!isMuted)}>
             {isMuted ? <MicOff /> : <Mic />}
           </ControlButton>
+          <ControlButton onClick={() => (sttActive ? stopSTT() : startSTT())} title={sttActive ? 'Stop Listening' : 'Start Listening'}>
+            {sttActive ? <MicOff /> : <Mic />}
+          </ControlButton>
           <ControlButton onClick={() => setIsVideoOff(!isVideoOff)}>
             {isVideoOff ? <VideoOff /> : <Video />}
           </ControlButton>
@@ -649,6 +749,9 @@ const ProfessionalInterviewPage = () => {
 
         </VideoControls>
         
+        {liveCaption && (
+          <CaptionOverlay>{liveCaption}</CaptionOverlay>
+        )}
 
         {/* Voice Settings Panel */}
         {showVoiceSettings && (
@@ -683,41 +786,45 @@ const ProfessionalInterviewPage = () => {
           </VoiceSettingsPanel>
         )}
 
-        {/* Chat Messages */}
-        <ChatContainer>
-          {chatMessages.map((message, index) => (
-            <ChatMessage key={index} isAI={message.type === 'ai'}>
-              <MessageSender>{message.sender}</MessageSender>
-              <MessageText>{message.content}</MessageText>
-            </ChatMessage>
-          ))}
-        </ChatContainer>
-        
-        {/* Text Input for Responses */}
-        <TextInputContainer>
-          <TextInput
-            type="text"
-            placeholder="Type your answer here..."
-            value={userResponse}
-            onChange={(e) => setUserResponse(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && userResponse.trim()) {
-                handleUserResponse(userResponse);
-                setUserResponse('');
-              }
-            }}
-          />
-          <SendButton
-            onClick={() => {
-              if (userResponse.trim()) {
-                handleUserResponse(userResponse);
-                setUserResponse('');
-              }
-            }}
-          >
-            <MessageCircle />
-          </SendButton>
-        </TextInputContainer>
+        {/* Chat Messages (hidden in voice-only mode) */}
+        {!voiceOnly && (
+          <>
+            <ChatContainer>
+              {chatMessages.map((message, index) => (
+                <ChatMessage key={index} isAI={message.type === 'ai'}>
+                  <MessageSender>{message.sender}</MessageSender>
+                  <MessageText>{message.content}</MessageText>
+                </ChatMessage>
+              ))}
+            </ChatContainer>
+            
+            {/* Text Input for Responses */}
+            <TextInputContainer>
+              <TextInput
+                type="text"
+                placeholder="Type your answer here..."
+                value={userResponse}
+                onChange={(e) => setUserResponse(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && userResponse.trim()) {
+                    handleUserResponse(userResponse);
+                    setUserResponse('');
+                  }
+                }}
+              />
+              <SendButton
+                onClick={() => {
+                  if (userResponse.trim()) {
+                    handleUserResponse(userResponse);
+                    setUserResponse('');
+                  }
+                }}
+              >
+                <MessageCircle />
+              </SendButton>
+            </TextInputContainer>
+          </>
+        )}
 
       </MainVideoArea>
       
