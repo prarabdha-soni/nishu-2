@@ -1,0 +1,26 @@
+{
+  "processed_at": "2025-09-11T09:40:11.093899",
+  "resume_analysis": {
+    "skills_extracted": [
+      "Python",
+      "JavaScript",
+      "React",
+      "Node.js",
+      "PostgreSQL"
+    ],
+    "experience_level": "Senior",
+    "key_achievements": [
+      "Led development",
+      "Built e-commerce platform"
+    ]
+  },
+  "job_analysis": {
+    "title": "Senior Software Engineer",
+    "required_skills": [
+      "Python",
+      "React",
+      "PostgreSQL"
+    ],
+    "experience_level": "Senior"
+  }
+}

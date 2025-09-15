@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+.venv/
+venv/
+.env
+.env.*
+
+# Node
+frontend/node_modules/
+frontend/.env
+frontend/.cache/
+
+# OS / IDE
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Logs and recordings
+logs/
+recordings/
+
+# Models and caches (keep small configs, ignore heavy weights)
+models/cache/
+models/base/
+models/checkpoints/
+models/fine_tuned/*
+!models/fine_tuned/.gitkeep
+models/rlhf/*
+!models/rlhf/preferences.jsonl
+!models/rlhf/.gitkeep
+
+# Databases
+*.db
+*.db-shm
+*.db-wal 

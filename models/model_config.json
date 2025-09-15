@@ -1,0 +1,26 @@
+{
+  "available_models": {
+    "dialoGPT": {
+      "name": "microsoft/DialoGPT-medium",
+      "type": "conversational",
+      "size": "medium",
+      "status": "downloading",
+      "description": "Microsoft DialoGPT for conversational AI"
+    },
+    "distilgpt2": {
+      "name": "distilgpt2",
+      "type": "text_generation",
+      "size": "small",
+      "status": "available",
+      "description": "DistilGPT2 for text generation"
+    }
+  },
+  "model_settings": {
+    "default_model": "microsoft/DialoGPT-medium",
+    "fallback_model": "distilgpt2",
+    "cache_dir": "./models/cache",
+    "max_length": 512,
+    "temperature": 0.7
+  },
+  "last_updated": "2025-09-11T09:44:16.908582"
+}

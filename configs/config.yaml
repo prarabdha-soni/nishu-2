@@ -1,0 +1,75 @@
+# AI Interview System Configuration
+
+# Model Configuration
+models:
+  llama:
+    model_name: "meta-llama/Llama-2-7b-chat-hf"
+    fallback_model: "microsoft/DialoGPT-medium"
+    max_length: 200
+    temperature: 0.7
+    device: "auto"  # auto, cuda, cpu
+  
+  chatterbox:
+    database_uri: "sqlite:///interview_bot.db"
+    max_similarity_threshold: 0.90
+    default_response: "I understand. Could you tell me more about that?"
+  
+  nlp:
+    spacy_model: "en_core_web_sm"
+    sentence_transformer: "all-MiniLM-L6-v2"
+
+# Redis Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  session_timeout: 3600  # 1 hour
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["http://localhost:3000"]
+  max_file_size: 10485760  # 10MB
+
+# TTS Configuration
+tts:
+  default_method: "pyttsx3"  # pyttsx3, gtts
+  rate: 150
+  volume: 0.9
+  language: "en"
+
+# Interview Configuration
+interview:
+  max_questions: 15
+  initial_questions: 3
+  adaptive_questions: 2
+  stages:
+    - "resume_analysis"
+    - "initial_questions"
+    - "adaptive_questions"
+    - "deep_dive"
+    - "closing"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/ai_interview_system.log"
+
+# Data Processing Configuration
+data_processing:
+  skill_categories:
+    - "programming_languages"
+    - "frameworks"
+    - "databases"
+    - "cloud_platforms"
+    - "tools"
+    - "ai_ml"
+  
+  entity_types:
+    - "PERSON"
+    - "ORG"
+    - "GPE"
+    - "TECH"
+    - "SKILL"
