@@ -10,7 +10,11 @@ import {
   MessageCircle,
   Volume2,
   VolumeX,
-  Square
+  Square,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff
 } from 'lucide-react';
 
 const InterviewContainer = styled.div`
@@ -350,8 +354,11 @@ const ProfessionalInterviewPage = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceSettings, setVoiceSettings] = useState({ rate: 180, volume: 0.9 });
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
   
   const streamRef = useRef(null);
+  const videoRef = useRef(null);
   const recordingIntervalRef = useRef(null);
 
   // Auto-start interview when component mounts

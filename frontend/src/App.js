@@ -9,6 +9,7 @@ import PreInterviewPage from './pages/PreInterviewPage';
 import ProfessionalInterviewPage from './pages/ProfessionalInterviewPage';
 import InterviewPage from './pages/InterviewPage';
 import ResultsPage from './pages/ResultsPage';
+import LandingPage from './pages/LandingPage';
 
 // Theme
 const theme = {
@@ -99,7 +100,7 @@ function App() {
           <Header />
           <MainContent>
             <Routes>
-              <Route path="/" element={<PreInterviewPage />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/pre-interview" element={<PreInterviewPage />} />
               <Route path="/interview/:sessionToken" element={<ProfessionalInterviewPage />} />
               <Route path="/interview-old/:sessionToken" element={<InterviewPage />} />
