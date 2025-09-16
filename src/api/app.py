@@ -37,8 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/recordings", StaticFiles(directory="recordings"), name="recordings")
+# Mount static files (ensure directory exists)
+RECORDINGS_DIR = os.environ.get("RECORDINGS_DIR", os.path.join(os.getcwd(), "recordings"))
+try:
+    os.makedirs(RECORDINGS_DIR, exist_ok=True)
+    app.mount("/recordings", StaticFiles(directory=RECORDINGS_DIR), name="recordings")
+    logger.info(f"Mounted /recordings from {RECORDINGS_DIR}")
+except Exception as e:
+    logger.warning(f"Skipping /recordings mount: {e}")
 
 # Pydantic models
 class InterviewStartRequest(BaseModel):

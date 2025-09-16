@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { sttService } from '../services/sttService';
 import styled from 'styled-components';
-
-const API_BASE = 'http://localhost:8000';
 import { toast } from 'react-hot-toast';
 import { 
   Phone,
@@ -19,6 +17,8 @@ import {
   Video,
   VideoOff
 } from 'lucide-react';
+
+const API_BASE = 'http://localhost:8000';
 
 const InterviewContainer = styled.div`
   min-height: 100vh;
