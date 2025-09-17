@@ -14,7 +14,7 @@ const HomeContainer = styled.div`
   padding: 2rem;
 `;
 
-const NishuLogo = styled.div`
+const JobXLogo = styled.div`
   width: 120px;
   height: 120px;
   background: rgba(255, 255, 255, 0.2);
@@ -84,8 +84,8 @@ const HomePage = () => {
 
   return (
     <HomeContainer>
-      <NishuLogo>N</NishuLogo>
-      <Title>Nishu</Title>
+      <JobXLogo>J</JobXLogo>
+      <Title>jobX</Title>
       <Subtitle>
         AI-Powered Interview System
         <br />

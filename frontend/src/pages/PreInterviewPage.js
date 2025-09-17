@@ -21,10 +21,9 @@ const PreInterviewContainer = styled.div`
 `;
 
 const MainContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 2fr 1fr;
   gap: 3rem;
   align-items: start;
   
@@ -89,9 +88,13 @@ const VideoPlaceholder = styled.div`
 `;
 
 const DeviceSettings = styled.div`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DeviceSetting = styled.div`
@@ -237,8 +240,6 @@ const Navigation = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
 `;
 
 const NavButton = styled.button`
@@ -260,23 +261,6 @@ const NavButton = styled.button`
   }
 `;
 
-const NishuLogo = styled.div`
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: bold;
-  color: white;
-  font-family: 'Arial', sans-serif;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-`;
 
 const PreInterviewPage = () => {
   const navigate = useNavigate();
@@ -390,8 +374,6 @@ const PreInterviewPage = () => {
 
   return (
     <PreInterviewContainer>
-      <NishuLogo>N</NishuLogo>
-      
       <MainContent>
         <LeftPanel>
           <Title>SWE Interview</Title>
@@ -501,7 +483,7 @@ const PreInterviewPage = () => {
             </SecondaryButtons>
             
             <Disclaimer>
-              Nishu uses generative AI to conduct the AI interview. Your responses are used only to assess your candidacy and are never used to train AI models.
+              jobX uses generative AI to conduct the AI interview. Your responses are used only to assess your candidacy and are never used to train AI models.
             </Disclaimer>
           </PreparationSection>
         </RightPanel>

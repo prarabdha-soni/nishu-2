@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { User, Video } from 'lucide-react';
+import { User, Video, Briefcase, Home } from 'lucide-react';
 
 const HeaderContainer = styled.header`
   background: ${props => props.theme.colors.surface};
@@ -33,7 +33,7 @@ const Logo = styled(Link)`
   }
 `;
 
-const NishuLogo = styled.div`
+const JobXLogo = styled.div`
   width: 40px;
   height: 40px;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
@@ -57,6 +57,30 @@ const LogoText = styled.span`
   background-clip: text;
 `;
 
+const Navigation = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.lg};
+`;
+
+const NavLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.sm};
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.md};
+  border-radius: ${props => props.theme.borderRadius.md};
+  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.textSecondary};
+  background: ${props => props.active ? 'rgba(102, 126, 234, 0.1)' : 'transparent'};
+  text-decoration: none;
+  font-weight: 500;
+  transition: all ${props => props.theme.transitions.normal};
+  
+  &:hover {
+    background: ${props => props.active ? 'rgba(102, 126, 234, 0.15)' : 'rgba(0, 0, 0, 0.05)'};
+    color: ${props => props.theme.colors.primary};
+  }
+`;
+
 const UserSection = styled.div`
   display: flex;
   align-items: center;
@@ -71,13 +95,26 @@ const UserInfo = styled.div`
 `;
 
 function Header() {
+  const location = useLocation();
+  
   return (
     <HeaderContainer>
       <HeaderContent>
         <Logo to="/">
-          <NishuLogo>N</NishuLogo>
-          <LogoText>Nishu</LogoText>
+          <JobXLogo>J</JobXLogo>
+          <LogoText>jobX</LogoText>
         </Logo>
+        
+        <Navigation>
+          <NavLink to="/" active={location.pathname === '/'}>
+            <Home size={16} />
+            Home
+          </NavLink>
+          <NavLink to="/jobs" active={location.pathname === '/jobs'}>
+            <Briefcase size={16} />
+            Jobs
+          </NavLink>
+        </Navigation>
         
         <UserSection>
           <UserInfo>

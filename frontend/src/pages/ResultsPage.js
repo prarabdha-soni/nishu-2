@@ -14,177 +14,249 @@ import {
 } from 'lucide-react';
 
 const ResultsContainer = styled.div`
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 2rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 `;
 
 const HeaderSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
 `;
 
 const Title = styled.h1`
-  color: #2d3748;
-  margin-bottom: 8px;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 `;
 
 const Subtitle = styled.p`
   color: #4a5568;
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
 `;
 
 const BackButton = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #4299e1;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   border: none;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.025em;
   
   &:hover {
-    background: #3182ce;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const ScoreCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
 `;
 
 const ScoreValue = styled.div`
-  font-size: 3rem;
-  font-weight: bold;
-  color: #10b981;
-  margin-bottom: 8px;
+  font-size: 4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.05em;
 `;
 
 const ScoreLabel = styled.div`
   color: #4a5568;
-  font-size: 1.1rem;
-  margin-bottom: 16px;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
 `;
 
 const ScoreBar = styled.div`
   width: 100%;
-  height: 8px;
+  height: 12px;
   background: #e2e8f0;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const ScoreFill = styled.div`
   height: 100%;
   background: linear-gradient(90deg, #10b981, #34d399);
   width: ${props => props.score}%;
-  transition: width 0.3s ease;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 `;
 
 const MetricsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 `;
 
 const MetricCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+  }
 `;
 
 const MetricIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: ${props => props.color || '#4299e1'};
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  background: ${props => props.color || '#667eea'};
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
+  margin: 0 auto 1.5rem;
   color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 `;
 
 const MetricValue = styled.div`
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2d3748;
-  margin-bottom: 8px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
 `;
 
 const MetricLabel = styled.div`
   color: #4a5568;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
 `;
 
 const FeedbackSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const FeedbackTitle = styled.h3`
-  color: #2d3748;
-  margin-bottom: 16px;
+  color: #1a202c;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 `;
 
 const FeedbackItem = styled.div`
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
   
   ${props => {
     switch (props.type) {
       case 'strength':
-        return 'background: #f0fff4; border-left: 4px solid #10b981;';
+        return `
+          background: rgba(16, 185, 129, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.2);
+          border-left: 4px solid #10b981;
+        `;
       case 'improvement':
-        return 'background: #fef5e7; border-left: 4px solid #f59e0b;';
+        return `
+          background: rgba(245, 158, 11, 0.1);
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          border-left: 4px solid #f59e0b;
+        `;
       default:
-        return 'background: #f7fafc; border-left: 4px solid #4299e1;';
+        return `
+          background: rgba(102, 126, 234, 0.1);
+          border: 1px solid rgba(102, 126, 234, 0.2);
+          border-left: 4px solid #667eea;
+        `;
     }
   }}
 `;
 
 const FeedbackText = styled.p`
-  color: #2d3748;
+  color: #1a202c;
   margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 500;
 `;
 
 const RecordingsSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const RecordingItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background: #f9fafb;
+  padding: 1.5rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  background: rgba(249, 250, 251, 0.8);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 `;
 
 const RecordingInfo = styled.div`
@@ -194,14 +266,15 @@ const RecordingInfo = styled.div`
 `;
 
 const RecordingIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  background: #4299e1;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 `;
 
 const RecordingDetails = styled.div`
@@ -210,13 +283,15 @@ const RecordingDetails = styled.div`
 
 const RecordingTitle = styled.div`
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 4px;
+  color: #1a202c;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
 `;
 
 const RecordingMeta = styled.div`
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #6b7280;
+  font-weight: 500;
 `;
 
 const RecordingActions = styled.div`
@@ -227,53 +302,65 @@ const RecordingActions = styled.div`
 const ActionButton = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
+  font-size: 0.875rem;
+  letter-spacing: 0.025em;
   
   ${props => {
     switch (props.variant) {
       case 'primary':
         return `
-          background: #4299e1;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
           
           &:hover {
-            background: #3182ce;
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
           }
         `;
       case 'secondary':
         return `
-          background: #e2e8f0;
+          background: rgba(226, 232, 240, 0.8);
           color: #4a5568;
+          border: 1px solid rgba(226, 232, 240, 0.5);
           
           &:hover {
-            background: #cbd5e0;
+            background: rgba(203, 213, 224, 0.8);
+            transform: translateY(-2px);
           }
         `;
       default:
         return `
-          background: #f7fafc;
+          background: rgba(247, 250, 252, 0.8);
           color: #4a5568;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(226, 232, 240, 0.5);
           
           &:hover {
-            background: #edf2f7;
+            background: rgba(237, 242, 247, 0.8);
+            transform: translateY(-2px);
           }
         `;
     }
   }}
+  
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 1rem;
   justify-content: center;
-  margin-top: 24px;
+  margin-top: 2rem;
 `;
 
 const ResultsPage = () => {
