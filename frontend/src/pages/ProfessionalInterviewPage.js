@@ -59,6 +59,15 @@ const AIBotPlaceholder = styled.div`
   }
 `;
 
+const IntroVideo = styled.video`
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 6px solid #2b6cb0;
+`;
+
 const BotIcon = styled(Bot)`
   width: 120px;
   height: 120px;
@@ -746,6 +755,15 @@ const ProfessionalInterviewPage = () => {
     return (
       <InterviewContainer>
         <MainVideoArea>
+          <IntroVideo
+            src={'/avatar.mp4'}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onError={() => toast.error('Intro video failed to load. Ensure avatar.mp4 is in public/.')}
+          />
           <StartButton onClick={startInterview}>
             Start Interview with Nishu AI
           </StartButton>
