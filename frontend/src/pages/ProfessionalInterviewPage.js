@@ -32,6 +32,10 @@ const InterviewContainer = styled.div`
   display: flex;
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
 `;
 
 const LeftSidebar = styled.div`
@@ -43,6 +47,18 @@ const LeftSidebar = styled.div`
   flex-direction: column;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
   position: relative;
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const SidebarHeader = styled.div`
@@ -129,6 +145,17 @@ const MainContent = styled.div`
   margin: 1rem;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 1024px) {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
 `;
 
 const RightSidebar = styled.div`
@@ -139,6 +166,18 @@ const RightSidebar = styled.div`
   display: flex;
   flex-direction: column;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const MainVideoArea = styled.div`
@@ -148,6 +187,10 @@ const MainVideoArea = styled.div`
   justify-content: center;
   position: relative;
   padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 
@@ -428,6 +471,12 @@ const DeviceControls = styled.div`
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
 `;
 
 const DeviceItem = styled.div`
@@ -488,6 +537,16 @@ const AIBotPlaceholder = styled.div`
     0 0 0 1px rgba(255, 255, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
+
+  @media (max-width: 768px) {
+    width: 280px;
+    height: 280px;
+  }
+
+  @media (max-width: 480px) {
+    width: 240px;
+    height: 240px;
+  }
   
   &::before {
     content: '';
@@ -655,6 +714,12 @@ const BottomControlBar = styled.div`
   justify-content: space-between;
   color: white;
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
 `;
 
 const TimerInfo = styled.div`
@@ -741,6 +806,16 @@ const ChatContainer = styled.div`
   padding: 1.5rem;
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 768px) {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    max-height: 300px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 `;
 
@@ -790,6 +865,15 @@ const TextInputContainer = styled.div`
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+  }
   display: flex;
   gap: 0.75rem;
 `;

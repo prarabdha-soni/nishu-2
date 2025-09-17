@@ -17,6 +17,10 @@ const JobsContainer = styled.div`
   background: #f8fafc;
   display: flex;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
 `;
 
 const LeftSidebar = styled.div`
@@ -27,6 +31,18 @@ const LeftSidebar = styled.div`
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 1024px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const Logo = styled.div`
@@ -119,6 +135,17 @@ const MainContent = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 1024px) {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
 `;
 
 const ComingSoonIcon = styled.div`
@@ -141,6 +168,10 @@ const ComingSoonTitle = styled.h1`
   margin-bottom: 1rem;
   letter-spacing: -0.025em;
   text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const ComingSoonSubtitle = styled.p`
@@ -150,6 +181,10 @@ const ComingSoonSubtitle = styled.p`
   text-align: center;
   line-height: 1.6;
   max-width: 500px;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const ComingSoonDescription = styled.p`
@@ -159,6 +194,10 @@ const ComingSoonDescription = styled.p`
   line-height: 1.6;
   max-width: 600px;
   margin-bottom: 3rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const NotifyButton = styled.button`

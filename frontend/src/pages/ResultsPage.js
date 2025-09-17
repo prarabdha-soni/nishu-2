@@ -20,6 +20,10 @@ const ResultsContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const HeaderSection = styled.div`
@@ -31,6 +35,11 @@ const HeaderSection = styled.div`
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
 `;
 
 const Title = styled.h1`
@@ -39,6 +48,10 @@ const Title = styled.h1`
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.025em;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -46,6 +59,10 @@ const Subtitle = styled.p`
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
   font-weight: 500;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const BackButton = styled.button`
@@ -128,6 +145,11 @@ const MetricsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const MetricCard = styled.div`

@@ -18,6 +18,10 @@ const PreInterviewContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 2rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const MainContent = styled.div`
@@ -38,6 +42,11 @@ const LeftPanel = styled.div`
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
 `;
 
 const RightPanel = styled.div`
@@ -45,6 +54,11 @@ const RightPanel = styled.div`
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
 `;
 
 const Title = styled.h1`
@@ -53,12 +67,20 @@ const Title = styled.h1`
   color: #1e293b;
   margin-bottom: 0.5rem;
   line-height: 1.1;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const Subtitle = styled.p`
   font-size: 1.25rem;
   color: #64748b;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const VideoContainer = styled.div`
