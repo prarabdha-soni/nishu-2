@@ -64,8 +64,21 @@ const IntroVideo = styled.video`
   height: 420px;
   border-radius: 50%;
   object-fit: cover;
+  display: block;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   border: 6px solid #2b6cb0;
+  z-index: 1;
+`;
+
+const IntroFrame = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
 `;
 
 const BotIcon = styled(Bot)`
@@ -386,6 +399,9 @@ const ProfessionalInterviewPage = () => {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [liveCaption, setLiveCaption] = useState('');
   const [sttActive, setSttActive] = useState(false);
+  const introVideoRef = useRef(null);
+  const [introSrc, setIntroSrc] = useState('/avatar.mp4');
+  const [introPlaying, setIntroPlaying] = useState(false);
   
   const streamRef = useRef(null);
   const videoRef = useRef(null);
@@ -416,6 +432,17 @@ const ProfessionalInterviewPage = () => {
     });
   }, []);
 
+  // When returning to ready state, bust cache and try to autoplay the intro video
+  useEffect(() => {
+    if (interviewState === 'ready') {
+      const qs = `?_=${Date.now()}`;
+      setIntroSrc(`/avatar.mp4${qs}`);
+      setTimeout(() => {
+        try { introVideoRef.current && introVideoRef.current.play(); } catch (_) {}
+      }, 50);
+    }
+  }, [interviewState]);
+
   // Auto-start interview when component mounts
   useEffect(() => {
     if (interviewState === 'ready') {
@@ -423,19 +450,24 @@ const ProfessionalInterviewPage = () => {
     }
   }, []);
 
-  const startInterview = async () => {
+  const beginInterviewCore = async () => {
     try {
+      // Move to interview UI regardless of device access
       setInterviewState('active');
-      
-      // Start video stream
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
+
+      // Try to get camera/mic, but continue if denied or unavailable
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          streamRef.current = stream;
+        }
+      } catch (mediaErr) {
+        console.warn('Media devices unavailable or permission denied:', mediaErr);
+        toast("Camera/microphone unavailable. Continuing with voice-only or chat.");
       }
 
       // Start STT listening
@@ -494,7 +526,41 @@ const ProfessionalInterviewPage = () => {
       }
     } catch (error) {
       console.error('Error starting interview:', error);
-      toast.error('Failed to start interview. Please check your camera and microphone permissions.');
+      toast.error('Failed to start interview. Please retry.');
+    }
+  };
+
+  const startInterview = async () => {
+    try {
+      // Kick off intro video once user clicks start; play once then begin interview core
+      setIntroPlaying(true);
+      const qs = `?_=${Date.now()}`;
+      setIntroSrc(`/avatar.mp4${qs}`);
+      setTimeout(() => {
+        const vid = introVideoRef.current;
+        if (vid) {
+          try {
+            vid.loop = false;
+            vid.currentTime = 0;
+            // Unmute for intro audio; user gesture has occurred
+            vid.muted = false;
+            const playPromise = vid.play();
+            if (playPromise && typeof playPromise.then === 'function') {
+              playPromise.catch(() => {/* ignore */});
+            }
+            vid.onended = () => {
+              setIntroPlaying(false);
+              beginInterviewCore();
+            };
+          } catch (_) {
+            beginInterviewCore();
+          }
+        } else {
+          beginInterviewCore();
+        }
+      }, 50);
+    } catch (_) {
+      beginInterviewCore();
     }
   };
 
@@ -755,18 +821,29 @@ const ProfessionalInterviewPage = () => {
     return (
       <InterviewContainer>
         <MainVideoArea>
-          <IntroVideo
-            src={'/avatar.mp4'}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            onError={() => toast.error('Intro video failed to load. Ensure avatar.mp4 is in public/.')}
-          />
-          <StartButton onClick={startInterview}>
-            Start Interview with Nishu AI
-          </StartButton>
+          <IntroFrame>
+            <IntroVideo
+              ref={introVideoRef}
+              src={introSrc}
+              muted={!introPlaying}
+              playsInline
+              preload="auto"
+              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Crect width='100%25' height='100%25' rx='210' ry='210' fill='%232b6cb0'/%3E%3C/svg%3E"
+              onLoadedData={() => console.log('Intro video loaded')}
+              onError={() => toast.error('Intro video failed to load. Ensure avatar.mp4 is in public/.')}
+            >
+              <source src={introSrc} type="video/mp4" />
+            </IntroVideo>
+          </IntroFrame>
+          {!introPlaying ? (
+            <StartButton onClick={startInterview}>
+              Start Interview with Nishu AI
+            </StartButton>
+          ) : (
+            <StartButton onClick={() => { setIntroPlaying(false); beginInterviewCore(); }}>
+              Skip Intro
+            </StartButton>
+          )}
         </MainVideoArea>
       </InterviewContainer>
     );
