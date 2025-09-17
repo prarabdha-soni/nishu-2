@@ -18,7 +18,7 @@ import {
   VideoOff
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://nishu-2.onrender.com';
 
 const InterviewContainer = styled.div`
   min-height: 100vh;
@@ -399,7 +399,11 @@ const ProfessionalInterviewPage = () => {
         }
         setUserResponse('');
       },
-      onError: (e) => console.error('STT error', e)
+      onError: (e) => {
+        console.error('STT error', e);
+        toast.error('Speech recognition error. Please allow microphone and try Chrome.');
+        setSttActive(false);
+      }
     });
   }, []);
 
@@ -433,6 +437,15 @@ const ProfessionalInterviewPage = () => {
         toast.error('Speech recognition not supported in this browser.');
       }
       
+      // Immediately greet the user with a spoken prompt
+      const defaultWelcome = "Hi, tell me about yourself.";
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        content: defaultWelcome,
+        sender: 'Nishu AI'
+      }]);
+      speakText(defaultWelcome);
+
       // Start interview session
       const response = await fetch(API_BASE + '/api/v1/interviews/start', {
         method: 'POST',
@@ -478,7 +491,7 @@ const ProfessionalInterviewPage = () => {
 
   const askFirstQuestion = async () => {
     try {
-      const response = await fetch('/api/v1/interviews/chat', {
+      const response = await fetch(API_BASE + '/api/v1/interviews/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -587,7 +600,14 @@ const ProfessionalInterviewPage = () => {
 
 
   const speakText = async (text) => {
-    if (!ttsEnabled || isSpeaking) return; // Prevent duplicate calls
+    if (!ttsEnabled || isSpeaking) return;
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    if (!synth) {
+      console.warn('SpeechSynthesis API not available');
+      toast.error('Text-to-speech not supported in this browser.');
+      return;
+    }
+
     setIsSpeaking(true);
 
     // Mute mic while TTS plays to prevent feedback/echo
@@ -599,32 +619,56 @@ const ProfessionalInterviewPage = () => {
 
     try {
       if (sttService.isListening) sttService.stop();
-      await fetch(API_BASE + '/api/v1/tts/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      // Map rate from words-per-minute style to speechSynthesis range (0.1 - 10)
+      // Our voiceSettings.rate defaults to ~180; normalize around 1.0 baseline
+      const normalizedRate = Math.min(2, Math.max(0.5, (voiceSettings.rate || 180) / 180));
+      utterance.rate = normalizedRate;
+      utterance.volume = Math.min(1, Math.max(0, voiceSettings.volume ?? 0.9));
+      utterance.onend = () => {
+        if (streamRef.current) {
+          streamRef.current.getAudioTracks().forEach(t => t.enabled = !prevMuted);
+        }
+        setIsMuted(prevMuted);
+        if (sttService.available) sttService.start();
+        setIsSpeaking(false);
+      };
+      utterance.onerror = (e) => {
+        console.error('Speech synthesis error:', e);
+        if (streamRef.current) {
+          streamRef.current.getAudioTracks().forEach(t => t.enabled = !prevMuted);
+        }
+        setIsMuted(prevMuted);
+        if (sttService.available) sttService.start();
+        setIsSpeaking(false);
+        toast.error('Failed to speak AI response.');
+      };
+
+      synth.cancel();
+      synth.speak(utterance);
     } catch (error) {
       console.error('Error speaking text:', error);
-      toast.error('Failed to speak AI response.');
-    } finally {
-      // Re-enable mic to previous state
       if (streamRef.current) {
         streamRef.current.getAudioTracks().forEach(t => t.enabled = !prevMuted);
       }
       setIsMuted(prevMuted);
-      // Resume STT after TTS ends
       if (sttService.available) sttService.start();
       setIsSpeaking(false);
+      toast.error('Failed to speak AI response.');
     }
   };
 
   const toggleTTS = () => {
-    setTtsEnabled(!ttsEnabled);
-    // Pause STT while TTS is enabled and speaking
-    if (!ttsEnabled) {
-      // Turning ON TTS
-      if (sttService.isListening) sttService.stop();
+    const next = !ttsEnabled;
+    setTtsEnabled(next);
+    if (!next) {
+      // Turning OFF TTS - stop any ongoing speech
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+      if (sttService.available && !sttService.isListening) sttService.start();
     }
   };
 
@@ -660,8 +704,11 @@ const ProfessionalInterviewPage = () => {
 
   const stopTTS = async () => {
     try {
-      await fetch(API_BASE + '/api/v1/tts/stop', { method: 'POST' });
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
+      if (sttService.available && !sttService.isListening) sttService.start();
     } catch (error) {
       console.error('Error stopping TTS:', error);
     }

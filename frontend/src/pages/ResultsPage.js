@@ -291,7 +291,7 @@ const ResultsPage = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/v1/interviews/${interviewId}/summary`);
+      const response = await fetch(`https://nishu-2.onrender.com/api/v1/interviews/${interviewId}/summary`);
       
       if (response.ok) {
         const data = await response.json();
@@ -364,14 +364,14 @@ const ResultsPage = () => {
 
   const downloadRecording = (recording) => {
     const link = document.createElement('a');
-    link.href = `http://localhost:8000${recording.url}`;
+    link.href = `https://nishu-2.onrender.com${recording.url}`;
     link.download = recording.filename;
     link.click();
     toast.success('Recording download started');
   };
 
   const playRecording = (recording) => {
-    window.open(`http://localhost:8000${recording.url}`, '_blank');
+    window.open(`https://nishu-2.onrender.com${recording.url}`, '_blank');
   };
 
   const downloadReport = () => {
