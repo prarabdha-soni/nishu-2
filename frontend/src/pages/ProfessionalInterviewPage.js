@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { sttService } from '../services/sttService';
 import { freeAIService } from '../services/freeAIService';
+import { companyMatchingService } from '../services/companyMatchingService';
 import styled from 'styled-components';
 import { toast } from 'react-hot-toast';
 import { 
@@ -26,6 +27,52 @@ import {
 } from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+// Candidate Profile Data Collection
+const CandidateProfileForm = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+  
+  input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+`;
 
 const InterviewContainer = styled.div`
   min-height: 100vh;
@@ -1046,6 +1093,23 @@ const ProfessionalInterviewPage = () => {
   const [introSrc, setIntroSrc] = useState('/avatar.mp4');
   const [introPlaying, setIntroPlaying] = useState(false);
   
+  // Candidate Profile Data for AI Matching
+  const [candidateProfile, setCandidateProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+    experience: '',
+    skills: '',
+    preferredRoles: '',
+    salaryExpectation: '',
+    workType: 'remote', // remote, hybrid, onsite
+    availability: '',
+    linkedin: '',
+    portfolio: '',
+    additionalInfo: ''
+  });
+  
   const streamRef = useRef(null);
   const videoRef = useRef(null);
   const recordingIntervalRef = useRef(null);
@@ -1439,7 +1503,7 @@ const ProfessionalInterviewPage = () => {
     }
   };
 
-  const endInterview = () => {
+  const endInterview = async () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -1449,8 +1513,58 @@ const ProfessionalInterviewPage = () => {
     }
     if (sttService.isListening) sttService.stop();
     clearInterval(recordingIntervalRef.current);
+    
+    // Start company matching process
+    try {
+      toast.loading('🤖 AI is analyzing your interview and finding matching companies...', { duration: 5000 });
+      
+      // Collect interview transcript from chat messages
+      const interviewTranscript = chatMessages
+        .filter(msg => msg.type === 'user')
+        .map(msg => msg.content)
+        .join(' ');
+      
+      // Perform company matching
+      const matchingResult = await companyMatchingService.matchCandidates(
+        candidateProfile,
+        interviewTranscript,
+        { 
+          interview_duration: recordingDuration,
+          total_questions: chatMessages.filter(msg => msg.type === 'ai').length,
+          skills_demonstrated: candidateProfile.skills
+        }
+      );
+      
+      if (matchingResult.matches && matchingResult.matches.length > 0) {
+        toast.success(`🎉 Found ${matchingResult.total_matches} matching companies! Applying automatically...`);
+        
+        // Apply to all matching companies
+        const applications = await companyMatchingService.applyToAllMatches(
+          matchingResult.matches,
+          matchingResult.candidate_id
+        );
+        
+        // Store results in session storage for results page
+        sessionStorage.setItem('interviewResults', JSON.stringify({
+          candidateProfile,
+          matchingResult,
+          applications,
+          interviewTranscript,
+          completedAt: new Date().toISOString()
+        }));
+        
+        toast.success(`✅ Applied to ${applications.filter(app => !app.error).length} companies successfully!`);
+      } else {
+        toast.info('No matching companies found at this time. We\'ll keep your profile and notify you of new opportunities.');
+      }
+      
+    } catch (error) {
+      console.error('Error in company matching:', error);
+      toast.error('Failed to complete company matching. Please try again.');
+    }
+    
     setInterviewState('completed');
-    navigate('/dashboard');
+    navigate('/results');
   };
 
   const startSTT = () => {
@@ -1509,8 +1623,116 @@ const ProfessionalInterviewPage = () => {
         </LeftSidebar>
         
         <MainContent>
-          <PageTitle>SWE Interview</PageTitle>
-          <InterviewPrompt>Test out your general software engineering skills.</InterviewPrompt>
+          <PageTitle>Interview Once, Get Hired by Many</PageTitle>
+          <InterviewPrompt>Give one comprehensive interview and our AI will apply you to all matching companies.</InterviewPrompt>
+          
+          <CandidateProfileForm>
+            <h3>📝 Your Profile (for AI Matching)</h3>
+            <div className="form-group">
+              <label>Full Name *</label>
+              <input 
+                type="text" 
+                value={candidateProfile.name}
+                onChange={(e) => setCandidateProfile({...candidateProfile, name: e.target.value})}
+                placeholder="Enter your full name"
+              />
+            </div>
+            <div className="form-group">
+              <label>Email *</label>
+              <input 
+                type="email" 
+                value={candidateProfile.email}
+                onChange={(e) => setCandidateProfile({...candidateProfile, email: e.target.value})}
+                placeholder="your.email@example.com"
+              />
+            </div>
+            <div className="form-group">
+              <label>Location</label>
+              <input 
+                type="text" 
+                value={candidateProfile.location}
+                onChange={(e) => setCandidateProfile({...candidateProfile, location: e.target.value})}
+                placeholder="City, Country"
+              />
+            </div>
+            <div className="form-group">
+              <label>Years of Experience</label>
+              <select 
+                value={candidateProfile.experience}
+                onChange={(e) => setCandidateProfile({...candidateProfile, experience: e.target.value})}
+              >
+                <option value="">Select experience level</option>
+                <option value="0-1">0-1 years (Entry Level)</option>
+                <option value="2-3">2-3 years (Junior)</option>
+                <option value="4-6">4-6 years (Mid Level)</option>
+                <option value="7-10">7-10 years (Senior)</option>
+                <option value="10+">10+ years (Lead/Principal)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Skills & Technologies</label>
+              <textarea 
+                value={candidateProfile.skills}
+                onChange={(e) => setCandidateProfile({...candidateProfile, skills: e.target.value})}
+                placeholder="e.g., JavaScript, React, Node.js, Python, AWS, etc."
+              />
+            </div>
+            <div className="form-group">
+              <label>Preferred Roles</label>
+              <textarea 
+                value={candidateProfile.preferredRoles}
+                onChange={(e) => setCandidateProfile({...candidateProfile, preferredRoles: e.target.value})}
+                placeholder="e.g., Frontend Developer, Full Stack Engineer, DevOps Engineer, etc."
+              />
+            </div>
+            <div className="form-group">
+              <label>Salary Expectation (USD/year)</label>
+              <input 
+                type="text" 
+                value={candidateProfile.salaryExpectation}
+                onChange={(e) => setCandidateProfile({...candidateProfile, salaryExpectation: e.target.value})}
+                placeholder="e.g., $80,000 - $120,000"
+              />
+            </div>
+            <div className="form-group">
+              <label>Work Type Preference</label>
+              <select 
+                value={candidateProfile.workType}
+                onChange={(e) => setCandidateProfile({...candidateProfile, workType: e.target.value})}
+              >
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="onsite">On-site</option>
+                <option value="any">Any</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>LinkedIn Profile</label>
+              <input 
+                type="url" 
+                value={candidateProfile.linkedin}
+                onChange={(e) => setCandidateProfile({...candidateProfile, linkedin: e.target.value})}
+                placeholder="https://linkedin.com/in/yourprofile"
+              />
+            </div>
+            <div className="form-group">
+              <label>Portfolio/Website</label>
+              <input 
+                type="url" 
+                value={candidateProfile.portfolio}
+                onChange={(e) => setCandidateProfile({...candidateProfile, portfolio: e.target.value})}
+                placeholder="https://yourportfolio.com"
+              />
+            </div>
+            <div className="form-group">
+              <label>Additional Information</label>
+              <textarea 
+                value={candidateProfile.additionalInfo}
+                onChange={(e) => setCandidateProfile({...candidateProfile, additionalInfo: e.target.value})}
+                placeholder="Any other information that would help with matching..."
+              />
+            </div>
+          </CandidateProfileForm>
           
           <VideoSection>
             {introPlaying ? (

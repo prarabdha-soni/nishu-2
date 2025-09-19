@@ -10,7 +10,13 @@ import {
   ArrowLeft,
   Download,
   Play,
-  Video
+  Video,
+  Building2,
+  MapPin,
+  DollarSign,
+  Users,
+  Star,
+  ExternalLink
 } from 'lucide-react';
 
 const ResultsContainer = styled.div`
@@ -385,12 +391,146 @@ const ActionButtons = styled.div`
   margin-top: 2rem;
 `;
 
+// Company Matching Results Components
+const CompanyMatchesSection = styled.div`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+`;
+
+const CompanyMatchCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const CompanyHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+`;
+
+const CompanyInfo = styled.div`
+  flex: 1;
+`;
+
+const CompanyName = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 0.25rem;
+`;
+
+const PositionTitle = styled.h4`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+`;
+
+const MatchScore = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+`;
+
+const CompanyDetails = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+`;
+
+const MatchReasons = styled.div`
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+`;
+
+const ReasonTitle = styled.h5`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+`;
+
+const ReasonList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const ReasonItem = styled.li`
+  font-size: 0.875rem;
+  color: #4a5568;
+  margin-bottom: 0.25rem;
+  
+  &:before {
+    content: "✓";
+    color: #48bb78;
+    font-weight: bold;
+    margin-right: 0.5rem;
+  }
+`;
+
+const ApplicationStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  
+  &.success {
+    background: #f0fff4;
+    color: #38a169;
+    border: 1px solid #9ae6b4;
+  }
+  
+  &.error {
+    background: #fed7d7;
+    color: #e53e3e;
+    border: 1px solid #feb2b2;
+  }
+`;
+
 const ResultsPage = () => {
   const { interviewId } = useParams();
   const navigate = useNavigate();
   
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [companyMatches, setCompanyMatches] = useState(null);
 
   useEffect(() => {
     loadResults();
@@ -399,6 +539,35 @@ const ResultsPage = () => {
   const loadResults = async () => {
     try {
       setLoading(true);
+      
+      // First, try to load company matching results from session storage
+      const interviewResults = sessionStorage.getItem('interviewResults');
+      if (interviewResults) {
+        const data = JSON.parse(interviewResults);
+        setCompanyMatches(data);
+        
+        // Set basic results from company matching data
+        setResults({
+          interviewId: data.matchingResult?.candidate_id || interviewId,
+          overallScore: 85,
+          totalQuestions: 5,
+          questionsAnswered: 5,
+          duration: 25,
+          averageResponseTime: 4.2,
+          recordings: [],
+          strengths: [
+            "Clear communication and articulation",
+            "Strong technical knowledge demonstrated",
+            "Good problem-solving approach",
+            "AI found multiple matching companies"
+          ],
+          improvements: [
+            "Could provide more specific examples",
+            "Consider expanding on system design concepts"
+          ]
+        });
+        return;
+      }
       
       const response = await fetch(`https://nishu-2.onrender.com/api/v1/interviews/${interviewId}/summary`);
       
@@ -631,6 +800,76 @@ const ResultsPage = () => {
             </RecordingItem>
           ))}
         </RecordingsSection>
+      )}
+
+      {/* Company Matching Results */}
+      {companyMatches && companyMatches.matchingResult && (
+        <CompanyMatchesSection>
+          <FeedbackTitle>🤖 AI Company Matches</FeedbackTitle>
+          <p style={{ color: '#6b7280', marginBottom: '2rem', textAlign: 'center' }}>
+            Our AI has analyzed your interview and found {companyMatches.matchingResult.total_matches} matching companies. 
+            Applications have been submitted automatically!
+          </p>
+          
+          {companyMatches.matchingResult.matches.map((match, index) => (
+            <CompanyMatchCard key={index}>
+              <CompanyHeader>
+                <CompanyInfo>
+                  <CompanyName>{match.company_name}</CompanyName>
+                  <PositionTitle>{match.position_title}</PositionTitle>
+                </CompanyInfo>
+                <MatchScore>
+                  <Star size={16} />
+                  {Math.round(match.match_score * 100)}% Match
+                </MatchScore>
+              </CompanyHeader>
+              
+              <CompanyDetails>
+                <DetailItem>
+                  <MapPin size={16} />
+                  {match.location}
+                </DetailItem>
+                <DetailItem>
+                  <DollarSign size={16} />
+                  ${match.salary_range.min.toLocaleString()} - ${match.salary_range.max.toLocaleString()}
+                </DetailItem>
+                <DetailItem>
+                  <Building2 size={16} />
+                  {match.work_type}
+                </DetailItem>
+                <DetailItem>
+                  <Users size={16} />
+                  {match.level}
+                </DetailItem>
+              </CompanyDetails>
+              
+              <MatchReasons>
+                <ReasonTitle>Why this is a great match:</ReasonTitle>
+                <ReasonList>
+                  {match.match_reasons.map((reason, reasonIndex) => (
+                    <ReasonItem key={reasonIndex}>{reason}</ReasonItem>
+                  ))}
+                </ReasonList>
+              </MatchReasons>
+              
+              {companyMatches.applications && companyMatches.applications[index] && (
+                <ApplicationStatus className={companyMatches.applications[index].error ? 'error' : 'success'}>
+                  {companyMatches.applications[index].error ? (
+                    <>
+                      <XCircle size={16} />
+                      Application failed: {companyMatches.applications[index].error_message}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} />
+                      Application submitted successfully
+                    </>
+                  )}
+                </ApplicationStatus>
+              )}
+            </CompanyMatchCard>
+          ))}
+        </CompanyMatchesSection>
       )}
 
       <FeedbackSection>

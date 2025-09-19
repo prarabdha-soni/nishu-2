@@ -35,6 +35,17 @@ const HeroText = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1.5rem;
+  max-width: 800px;
+`;
+
+const Description = styled.p`
+  color: #4a5568;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
 `;
 
 const LogoImage = styled.img`
@@ -257,6 +268,12 @@ export default function LandingPage() {
         </CornerButton>
         <HeroText>
           <LogoImage src="/jobx-image.png" alt="jobX" />
+          <Title>Interview Once, Get Hired by Many</Title>
+          <Subtitle>jobX - Your AI Hiring Agent</Subtitle>
+          <Description>
+            Give one interview with jobX, and our AI bot will automatically apply you to all companies 
+            that match your profile. We handle the entire hiring process - you just focus on your best performance.
+          </Description>
         </HeroText>
       </Hero>
     </Container>

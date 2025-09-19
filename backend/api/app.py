@@ -18,6 +18,9 @@ from src.scoring.voice_scorer import voice_scorer
 from src.core.session_manager import session_manager
 from src.speech_interface.tts_module import tts_module
 
+# Import company matching
+from api.company_matching import router as company_router
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include company matching routes
+app.include_router(company_router, prefix="/api/v1/companies", tags=["company-matching"])
 
 # Mount static files (ensure directory exists)
 RECORDINGS_DIR = os.environ.get("RECORDINGS_DIR", os.path.join(os.getcwd(), "recordings"))

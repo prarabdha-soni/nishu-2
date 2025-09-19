@@ -83,6 +83,26 @@ const Subtitle = styled.p`
   }
 `;
 
+const BusinessModelInfo = styled.div`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  p {
+    margin: 0;
+    opacity: 0.9;
+    line-height: 1.5;
+  }
+`;
+
 const VideoContainer = styled.div`
   position: relative;
   background: #000;
@@ -398,8 +418,16 @@ const PreInterviewPage = () => {
     <PreInterviewContainer>
       <MainContent>
         <LeftPanel>
-          <Title>SWE Interview</Title>
-          <Subtitle>Test out your general software engineering skills.</Subtitle>
+          <Title>Interview Once, Get Hired by Many</Title>
+          <Subtitle>Give one comprehensive interview and our AI will apply you to all matching companies.</Subtitle>
+          
+          <BusinessModelInfo>
+            <h3>🤖 How jobX Works</h3>
+            <p>
+              After your interview, our AI bot will automatically analyze your skills, experience, and preferences, 
+              then apply you to all companies that match your profile. You focus on one great interview - we handle the rest!
+            </p>
+          </BusinessModelInfo>
           
           <VideoContainer>
             {isVideoOn ? (
