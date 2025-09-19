@@ -1,49 +1,97 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
+import BusinessModel from '../components/BusinessModel';
 
 const Container = styled.div`
   min-height: 100vh;
   background: #ffffff;
 `;
 
+const CornerButton = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+`;
+
 const Hero = styled.section`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 6rem 2rem 4rem;
+  padding: 0 2rem 4rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  position: relative;
 
   @media (max-width: 1024px) {
-    padding: 4rem 1.5rem 3rem;
+    padding: 0 1.5rem 3rem;
   }
 `;
 
-const HeroText = styled.div``;
+const HeroText = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const LogoImage = styled.img`
+  max-width: 600px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  
+  @media (max-width: 768px) {
+    max-width: 500px;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 400px;
+  }
+`;
 
 const Title = styled.h1`
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   line-height: 1.1;
-  font-weight: 800;
+  font-weight: 900;
   color: #1a202c;
   margin-bottom: 1.5rem;
-  letter-spacing: -0.025em;
-  max-width: 800px;
+  letter-spacing: -0.03em;
+  max-width: 900px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 `;
 
 const Lead = styled.p`
   color: #4a5568;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   margin-bottom: 2.5rem;
   line-height: 1.6;
-  max-width: 600px;
+  max-width: 700px;
+  font-weight: 500;
+`;
+
+const Subtitle = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+`;
+
+const Tagline = styled.p`
+  color: #718096;
+  font-size: 1rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  font-style: italic;
+  font-weight: 500;
 `;
 
 const CTAGroup = styled.div`
@@ -54,40 +102,42 @@ const CTAGroup = styled.div`
 `;
 
 const PrimaryButton = styled.button`
-  padding: 1rem 2rem;
+  padding: 1.25rem 2.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 1.125rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  letter-spacing: 0.025em;
   
   &:hover {
     background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
   }
 `;
 
 const GhostButton = styled.button`
-  padding: 1rem 2rem;
+  padding: 1.25rem 2.5rem;
   background: white;
   color: #1a202c;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 1.125rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  letter-spacing: 0.025em;
   
   &:hover {
     border-color: #667eea;
     color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   }
 `;
 
@@ -143,11 +193,12 @@ const Section = styled.section`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 2.25rem;
+  font-weight: 900;
   color: #1a202c;
   margin-bottom: 3rem;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const ProcessGrid = styled.div`
@@ -201,57 +252,13 @@ export default function LandingPage() {
   return (
     <Container>
       <Hero>
+        <CornerButton>
+          <PrimaryButton onClick={goStart}>Start Interview</PrimaryButton>
+        </CornerButton>
         <HeroText>
-          <Title>Hire Global Talent, Pay Daily or Weekly. Simple.</Title>
-          <Lead>
-            jobX hires on your behalf. Global compliance, protected payouts, and faster onboarding.
-          </Lead>
-          <CTAGroup>
-            <PrimaryButton onClick={goStart}>Start Hiring Today</PrimaryButton>
-            <GhostButton onClick={goStart}>Start Interview</GhostButton>
-          </CTAGroup>
+          <LogoImage src="/jobx-image.png" alt="jobX" />
         </HeroText>
       </Hero>
-
-      <Section>
-        <SectionTitle>How It Works</SectionTitle>
-        <Cards>
-          <Card>
-            <strong>Tell us your requirements</strong>
-            <p>Roles, skills, timezone, budget.</p>
-          </Card>
-          <Card>
-            <strong>Get matched with market</strong>
-            <p>Curated candidates from our network.</p>
-          </Card>
-          <Card>
-            <strong>Pay daily / weekly</strong>
-            <p>Reliable payments with compliance and protections.</p>
-          </Card>
-        </Cards>
-      </Section>
-
-      <Section>
-        <SectionTitle>Our Process</SectionTitle>
-        <ProcessGrid>
-          <ProcessCard>
-            <strong>Apply</strong>
-          </ProcessCard>
-          <ProcessCard>
-            <strong>Get Matched</strong>
-          </ProcessCard>
-          <ProcessCard>
-            <strong>Start Working</strong>
-          </ProcessCard>
-          <ProcessCard>
-            <strong>Get Paid</strong>
-          </ProcessCard>
-        </ProcessGrid>
-      </Section>
-
-      <FooterCTA>
-        <PrimaryButton onClick={goStart}>Start Earning Today</PrimaryButton>
-      </FooterCTA>
     </Container>
   );
 } 

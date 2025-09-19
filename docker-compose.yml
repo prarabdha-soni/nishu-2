@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Free AI Backend
+  ai-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - OLLAMA_HOST=0.0.0.0
+    volumes:
+      - ./models:/root/.ollama
+      - ./audio:/tmp/audio
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ollama for Local AI Models
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          memory: 4G
+        limits:
+          memory: 8G
+
+  # Redis for Session Management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Model Downloader (runs once)
+  model-downloader:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    command: >
+      sh -c "
+        ollama pull phi3:3.8b &&
+        ollama pull llama3.1:8b &&
+        ollama pull mistral:7b &&
+        ollama pull qwen2.5:7b &&
+        echo 'All models downloaded successfully'
+      "
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: free_ai_network

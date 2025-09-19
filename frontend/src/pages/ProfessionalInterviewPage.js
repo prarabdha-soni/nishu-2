@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { sttService } from '../services/sttService';
+import { freeAIService } from '../services/freeAIService';
 import styled from 'styled-components';
 import { toast } from 'react-hot-toast';
 import { 
@@ -24,7 +25,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 
-const API_BASE = 'https://nishu-2.onrender.com';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const InterviewContainer = styled.div`
   min-height: 100vh;
@@ -1053,6 +1054,7 @@ const ProfessionalInterviewPage = () => {
   useEffect(() => {
     sttService.setCallbacks({
       onResult: ({ transcript, isFinal }) => {
+        console.log('Voice input received:', { transcript, isFinal, sessionData });
         if (!isFinal) {
           setLiveCaption(transcript);
           setUserResponse(transcript);
@@ -1060,19 +1062,39 @@ const ProfessionalInterviewPage = () => {
         }
         setLiveCaption('');
         if (!sessionData?.session_id) {
+          console.log('No session ID, queuing transcript:', transcript);
           pendingTranscriptsRef.current.push(transcript);
         } else {
+          console.log('Processing transcript with session:', transcript, sessionData.session_id);
           handleUserResponse(transcript);
         }
         setUserResponse('');
       },
       onError: (e) => {
         console.error('STT error', e);
-        // Only show error for non-permission issues
-        if (e.error !== 'not-allowed' && e.error !== 'permission-denied') {
-          toast.error('Speech recognition error. Please allow microphone and try Chrome.');
-        }
         setSttActive(false);
+        
+        // Handle different error types (less intrusive)
+        switch (e.error) {
+          case 'not-allowed':
+          case 'permission-denied':
+            console.log('Microphone permission denied - using text input only');
+            break;
+          case 'no-speech':
+            console.log('No speech detected - user can try again or use text input');
+            break;
+          case 'audio-capture':
+            console.log('Microphone not available - using text input only');
+            break;
+          case 'network':
+            console.log('Network error - using text input only');
+            break;
+          case 'service-not-allowed':
+            console.log('Speech recognition service not allowed - using text input only');
+            break;
+          default:
+            console.log(`Speech recognition error: ${e.error} - using text input only`);
+        }
       }
     });
   }, []);
@@ -1110,64 +1132,62 @@ const ProfessionalInterviewPage = () => {
           videoRef.current.srcObject = stream;
           streamRef.current = stream;
         }
+        console.log('Camera/microphone access granted');
       } catch (mediaErr) {
-        console.warn('Media devices unavailable or permission denied:', mediaErr);
-        toast("Camera/microphone unavailable. Continuing with voice-only or chat.");
+        console.log('Camera/microphone not available - continuing with text-only interview');
+        // Don't show error toast - this is expected behavior
+        // Interview will work with text input only
       }
 
-      // Start STT listening
+      // Start STT listening (optional)
       if (sttService.available) {
-        sttService.start();
+        const sttStarted = sttService.start();
+        if (sttStarted) {
+          setSttActive(true);
+          console.log('Voice recognition activated');
+        } else {
+          setSttActive(false);
+          console.log('Voice recognition not available - using text input only');
+        }
       } else {
-        console.warn('Web Speech API not available');
-        toast.error('Speech recognition not supported in this browser.');
+        console.log('Web Speech API not available - using text input only');
+        setSttActive(false);
       }
       
-      // Immediately greet the user with a spoken prompt
-      const defaultWelcome = "Hi, tell me about yourself.";
-      setChatMessages(prev => [...prev, {
-        type: 'ai',
-        content: defaultWelcome,
-        sender: 'Nishu AI'
-      }]);
-      speakText(defaultWelcome);
+      // Start interview session using Free AI Service
+      console.log('Creating interview session with Free AI...');
+      try {
+        const sessionData = await freeAIService.startInterview('SWE Interview', 'Prarabdha Soni');
+        console.log('Free AI session created:', sessionData);
+        setSessionData(sessionData);
 
-      // Start interview session
-      const response = await fetch(API_BASE + '/api/v1/interviews/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          interview_type: 'SWE Interview',
-          candidate_name: 'Prarabdha Soni'
-        })
-      });
-      
-              if (response.ok) {
-          const data = await response.json();
-          setSessionData(data);
+        // Flush any queued transcripts
+        if (pendingTranscriptsRef.current.length) {
+          const toSend = [...pendingTranscriptsRef.current];
+          pendingTranscriptsRef.current = [];
+          toSend.forEach(t => handleUserResponse(t, sessionData.session_id));
+        }
+        
+        // Start timer
+        recordingIntervalRef.current = setInterval(() => {
+          setRecordingDuration(prev => prev + 1);
+        }, 1000);
 
-          // Flush any queued transcripts
-          if (pendingTranscriptsRef.current.length) {
-            const toSend = [...pendingTranscriptsRef.current];
-            pendingTranscriptsRef.current = [];
-            toSend.forEach(t => handleUserResponse(t, data.session_id));
-          }
-          
-          // Start timer
-          recordingIntervalRef.current = setInterval(() => {
-            setRecordingDuration(prev => prev + 1);
-          }, 1000);
+        // Add welcome message
+        setChatMessages(prev => [...prev, {
+          type: 'ai',
+          content: sessionData.welcome_message,
+          sender: 'Nishu AI'
+        }]);
+
+        // Speak the welcome message using Free AI TTS
+        await freeAIService.speakText(sessionData.welcome_message);
         
-        // AI bot starts asking first question
-        setTimeout(() => {
-          askFirstQuestion();
-        }, 2000);
-        
-        toast.success('Interview started! AI bot will begin asking questions.');
-      } else {
-        throw new Error('Failed to start interview');
+          console.log('Free AI Interview started! Zero-cost AI is now active.');
+      } catch (error) {
+        console.error('Free AI session creation failed:', error);
+        toast.error('Failed to start Free AI session. Please retry.');
+        throw error;
       }
     } catch (error) {
       console.error('Error starting interview:', error);
@@ -1257,6 +1277,8 @@ const ProfessionalInterviewPage = () => {
   const handleUserResponse = async (response, forcedSessionId = null) => {
     if (!response.trim()) return;
     
+    console.log('Handling user response with Free AI:', response, 'Session ID:', forcedSessionId || sessionData?.session_id);
+    
     try {
       // Add user message to chat
       setChatMessages(prev => [...prev, {
@@ -1265,50 +1287,33 @@ const ProfessionalInterviewPage = () => {
         sender: 'You'
       }]);
       
-      // Send response to AI
-      const apiResponse = await fetch(API_BASE + '/api/v1/interviews/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          session_id: forcedSessionId || sessionData?.session_id, 
-          message: response
-        })
-      });
+      // Send response to Free AI
+      console.log('Sending to Free AI service...');
+      const aiResponse = await freeAIService.chatWithAI(response);
       
-      if (apiResponse.ok) {
-        const data = await apiResponse.json();
-        
-        // Add AI response to chat
-        setChatMessages(prev => [...prev, {
-          type: 'ai',
-          content: data.response || 'Thank you for your answer.',
-          sender: 'Nishu AI'
-        }]);
-        
-        // Speak the AI response (only if not already speaking)
-        if (data.response && !isSpeaking) {
-          speakText(data.response);
-        }
-        
-        if (data.next_question) {
-          setCurrentQuestion({ id: 'follow-up', text: data.next_question });
-          setChatMessages(prev => [...prev, {
-            type: 'ai',
-            content: data.next_question,
-            sender: 'Nishu AI'
-          }]);
-        } else {
-          // Interview completed
-          setInterviewState('completed');
-          clearInterval(recordingIntervalRef.current);
-          navigate(`/results/${sessionData?.session_id || 'demo_session'}`);
-        }
+      console.log('Free AI response:', aiResponse);
+      
+      // Add AI response to chat
+      setChatMessages(prev => [...prev, {
+        type: 'ai',
+        content: aiResponse.response || 'Thank you for your answer.',
+        sender: 'Nishu AI (Free)'
+      }]);
+      
+      // Speak the AI response using Free AI TTS (only if not already speaking)
+      if (aiResponse.response && !isSpeaking) {
+        await freeAIService.speakText(aiResponse.response);
+      }
+      
+      // Check if interview is complete
+      if (aiResponse.session_status === 'completed') {
+        setInterviewState('completed');
+        clearInterval(recordingIntervalRef.current);
+        navigate(`/results/${sessionData?.session_id || 'demo_session'}`);
       }
     } catch (error) {
-      console.error('Error sending response:', error);
-      toast.error('Failed to send response. Please try again.');
+      console.error('Error handling user response with Free AI:', error);
+      toast.error('Failed to get Free AI response. Please try again.');
     }
   };
 
@@ -1662,7 +1667,14 @@ const ProfessionalInterviewPage = () => {
           <ControlButton onClick={() => setIsMuted(!isMuted)}>
             {isMuted ? <MicOff /> : <Mic />}
           </ControlButton>
-          <ControlButton onClick={() => (sttActive ? stopSTT() : startSTT())} title={sttActive ? 'Stop Listening' : 'Start Listening'}>
+          <ControlButton 
+            onClick={() => (sttActive ? stopSTT() : startSTT())} 
+            title={sttActive ? 'Stop Listening' : 'Start Listening'}
+            style={{
+              backgroundColor: sttActive ? '#10b981' : '#ef4444',
+              opacity: sttService.available ? 1 : 0.5
+            }}
+          >
             {sttActive ? <MicOff /> : <Mic />}
           </ControlButton>
           <ControlButton onClick={() => setIsVideoOff(!isVideoOff)}>
@@ -1727,13 +1739,32 @@ const ProfessionalInterviewPage = () => {
                   <MessageText>{message.content}</MessageText>
                 </ChatMessage>
               ))}
+              
+              {/* Voice Status Message */}
+              {!sttActive && sttService.available && (
+                <ChatMessage isAI={false}>
+                  <MessageSender>System</MessageSender>
+                  <MessageText>
+                    💬 You can type your responses below, or click the microphone button to enable voice input.
+                  </MessageText>
+                </ChatMessage>
+              )}
+              
+              {!sttService.available && (
+                <ChatMessage isAI={false}>
+                  <MessageSender>System</MessageSender>
+                  <MessageText>
+                    💬 Please type your responses in the text box below. The interview will work perfectly with text input!
+                  </MessageText>
+                </ChatMessage>
+              )}
             </ChatContainer>
             
             {/* Text Input for Responses */}
             <TextInputContainer>
               <TextInput
                 type="text"
-                placeholder="Type your answer here..."
+                placeholder={sttActive ? "Speak or type your answer..." : "Type your answer here..."}
                 value={userResponse}
                 onChange={(e) => setUserResponse(e.target.value)}
                 onKeyPress={(e) => {
@@ -1750,6 +1781,7 @@ const ProfessionalInterviewPage = () => {
                     setUserResponse('');
                   }
                 }}
+                title={sttActive ? "Send message" : "Voice not available - use text input"}
               >
                 <MessageCircle />
               </SendButton>

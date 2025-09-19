@@ -30,6 +30,8 @@ class STTService {
       };
 
       this.recognition.onerror = (e) => {
+        console.error('Speech Recognition Error:', e);
+        this.isListening = false;
         if (this.onError) this.onError(e);
       };
 
@@ -42,10 +44,16 @@ class STTService {
   start() {
     if (!this.available || this.isListening) return false;
     try {
-      this.recognition.start();
-      this.isListening = true;
+      // Add a small delay to prevent rapid start/stop issues
+      setTimeout(() => {
+        if (this.recognition && !this.isListening) {
+          this.recognition.start();
+          this.isListening = true;
+        }
+      }, 100);
       return true;
     } catch (e) {
+      console.error('Failed to start speech recognition:', e);
       if (this.onError) this.onError(e);
       return false;
     }

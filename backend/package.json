@@ -1,0 +1,31 @@
+{
+  "name": "jobx-ai-backend",
+  "version": "1.0.0",
+  "description": "JobX AI Interview Platform - Free AI Backend",
+  "main": "main.py",
+  "scripts": {
+    "start": "python main.py",
+    "dev": "python main.py",
+    "test": "pytest",
+    "lint": "flake8 .",
+    "format": "black ."
+  },
+  "keywords": [
+    "ai",
+    "interview",
+    "free",
+    "ollama",
+    "whisper",
+    "tts",
+    "fastapi"
+  ],
+  "author": "JobX AI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jobx-ai/platform"
+  },
+  "engines": {
+    "python": ">=3.9"
+  }
+}

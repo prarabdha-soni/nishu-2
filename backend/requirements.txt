@@ -1,0 +1,25 @@
+# JobX AI Platform - Backend Dependencies
+# Free AI Infrastructure
+
+# Core Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+pydantic>=2.0.0
+
+# AI Models (Free)
+ollama>=0.1.0
+openai-whisper>=20231117
+edge-tts>=6.0.0
+requests>=2.28.0
+
+# Database & Caching
+redis>=4.0.0
+
+# HTTP & WebSocket
+websockets>=11.0
+httpx>=0.24.0
+aiofiles>=23.0.0
+
+# Utilities
+python-multipart>=0.0.6
+python-dotenv>=1.0.0
